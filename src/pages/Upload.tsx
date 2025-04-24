@@ -12,16 +12,22 @@ const Upload = () => {
 
   const handleFileUpload = async (file: File, title: string) => {
     setIsUploading(true);
+    console.log("Starting upload process for:", file.name);
     
     try {
       const formData = new FormData();
       formData.append('audio_file', file);
+      formData.append('name', title);
       
-      const response = await axios.post('/api/STT/', formData, {
+      console.log("Sending to backend:", { fileName: file.name, fileSize: file.size, title });
+      
+      const response = await axios.post('/STT/', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
+
+      console.log("Upload successful, response:", response.data);
 
       toast({
         title: "Upload successful!",
@@ -31,6 +37,8 @@ const Upload = () => {
       // Navigate to the summary page with the actual ID from response
       navigate(`/summary/${response.data.id}`);
     } catch (error) {
+      console.error("Upload failed:", error);
+      
       toast({
         title: "Upload failed",
         description: "There was an error uploading your audio file.",

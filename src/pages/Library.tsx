@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import { secondsToHMS } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,7 @@ import AudioCard from "@/components/ui/audio-card";
 import axios from "@/lib/axios";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import { toast } from "@/hooks/use-toast";
 
 interface AudioFile {
   id: number;
@@ -14,8 +15,17 @@ interface AudioFile {
   created_at: string;
 }
 
-const fetchAudioFiles = async () =>
-  (await axios.get<AudioFile[]>("/api/audio-files/")).data;
+const fetchAudioFiles = async () => {
+  console.log("Fetching audio files from API");
+  try {
+    const response = await axios.get<AudioFile[]>("/audio-files/");
+    console.log("Audio files fetched successfully:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching audio files:", error);
+    throw error;
+  }
+};
 
 const Library = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -23,7 +33,19 @@ const Library = () => {
   const { data: audioFiles = [], isLoading, error } = useQuery({
     queryKey: ['audioFiles'],
     queryFn: fetchAudioFiles,
+    onError: (err) => {
+      console.error("Query error:", err);
+      toast({
+        title: "Error loading library",
+        description: "Could not connect to the backend server.",
+        variant: "destructive",
+      });
+    }
   });
+
+  useEffect(() => {
+    console.log("Library component mounted");
+  }, []);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -51,7 +73,9 @@ const Library = () => {
   if (error) {
     return (
       <div className="container mx-auto px-4 py-10">
-        <div className="text-center text-red-500">Error loading audio files</div>
+        <div className="text-center text-red-500">
+          Error loading audio files. Please check console for details.
+        </div>
       </div>
     );
   }

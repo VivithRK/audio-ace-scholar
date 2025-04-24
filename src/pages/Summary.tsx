@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Toggle } from "@/components/ui/toggle";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,7 @@ import { FileAudio, Headphones } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "@/lib/axios";
 import { secondsToHMS } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
 
 interface QA { question: string; answer: string }
 interface AudioDetail {
@@ -22,11 +24,32 @@ const Summary = () => {
   const { id } = useParams<{ id: string }>();
   const [showQuestions, setShowQuestions] = useState(false);
   
+  useEffect(() => {
+    console.log("Summary component mounted for ID:", id);
+  }, [id]);
+  
   const { data, isLoading, error } = useQuery({
     queryKey: ["audio-detail", id],
-    queryFn: () =>
-      axios.get<AudioDetail>(`/api/audio-files/${id}/`).then(r => r.data),
+    queryFn: async () => {
+      console.log(`Fetching audio details for ID: ${id}`);
+      try {
+        const response = await axios.get<AudioDetail>(`/audio-files/${id}/`);
+        console.log("Audio details fetched successfully:", response.data);
+        return response.data;
+      } catch (error) {
+        console.error(`Error fetching audio details for ID ${id}:`, error);
+        throw error;
+      }
+    },
     enabled: !!id,
+    onError: (err) => {
+      console.error("Query error in Summary:", err);
+      toast({
+        title: "Error loading summary",
+        description: "Could not load the audio summary. Please try again later.",
+        variant: "destructive",
+      });
+    }
   });
 
   if (isLoading) return <div className="p-10 text-center">Loading…</div>;
