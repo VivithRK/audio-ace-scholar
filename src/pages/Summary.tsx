@@ -1,63 +1,45 @@
-
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { Toggle } from "@/components/ui/toggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileAudio, Headphones } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import axios from "@/lib/axios";
+import { secondsToHMS } from "@/lib/utils";
+
+interface QA { question: string; answer: string }
+interface AudioDetail {
+  id: number;
+  audio_path: string;
+  summary: string;
+  qa_pairs: QA[];
+  created_at: string;
+  duration_sec: number;
+}
 
 const Summary = () => {
   const { id } = useParams<{ id: string }>();
   const [showQuestions, setShowQuestions] = useState(false);
   
-  // Mock data for demonstration - in a real app this would come from an API/database
-  const audioData = {
-    id: id,
-    title: "Introduction to Psychology",
-    date: "April 20, 2025",
-    duration: "45 min",
-    summary: `
-      This lecture introduced the fundamental concepts of psychology as a scientific discipline. 
-      It began with an overview of the historical development of psychology, from philosophical 
-      roots to modern scientific approaches. The lecturer discussed various schools of thought 
-      including behaviorism, psychoanalysis, and cognitive psychology, highlighting how each 
-      perspective contributes to our understanding of human behavior and mental processes.
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["audio-detail", id],
+    queryFn: () =>
+      axios.get<AudioDetail>(`/api/audio-files/${id}/`).then(r => r.data),
+    enabled: !!id,
+  });
 
-      Key topics included:
-      - Definition and scope of psychology
-      - Major theoretical perspectives
-      - Research methods in psychology
-      - Ethical considerations in psychological research
-      - Applications of psychology in everyday life
+  if (isLoading) return <div className="p-10 text-center">Loading…</div>;
+  if (error || !data) return <div className="p-10 text-center text-red-500">Error loading file</div>;
 
-      The lecture emphasized the importance of empirical evidence and scientific methodology 
-      in psychological studies. It also touched on how psychology intersects with other disciplines 
-      such as neuroscience, sociology, and medicine.
-    `,
-    questions: [
-      {
-        question: "What are the major theoretical perspectives in psychology discussed in the lecture?",
-        answer: "The lecture discussed behaviorism, psychoanalysis, and cognitive psychology as major theoretical perspectives in the field."
-      },
-      {
-        question: "Why is empirical evidence important in psychological research?",
-        answer: "Empirical evidence is important because it provides objective, measurable data that can be tested and verified, which is essential for the scientific approach that psychology follows."
-      },
-      {
-        question: "How does psychology intersect with neuroscience?",
-        answer: "Psychology intersects with neuroscience in studying how brain structures and neural processes influence behavior, emotions, and cognitive functions."
-      },
-      {
-        question: "What ethical considerations were mentioned in psychological research?",
-        answer: "Ethical considerations included obtaining informed consent from participants, ensuring privacy and confidentiality, minimizing harm, and being honest about research procedures and goals."
-      },
-      {
-        question: "What are some applications of psychology in everyday life?",
-        answer: "Applications include mental health treatment, improving educational outcomes, optimizing workplace productivity, enhancing athletic performance, and designing more user-friendly products and environments."
-      }
-    ]
-  };
-
+  // Extract filename from path for title
+  const title = data.audio_path.split('/').pop() || `Audio ${id}`;
+  const date = new Date(data.created_at).toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  });
+  
   return (
     <div className="container mx-auto px-4 py-10">
       <div className="max-w-4xl mx-auto">
@@ -67,9 +49,9 @@ const Summary = () => {
               <FileAudio className="h-7 w-7 text-secondary" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold">{audioData.title}</h1>
+              <h1 className="text-3xl font-bold">{title}</h1>
               <p className="text-muted-foreground">
-                {audioData.date} • {audioData.duration}
+                {date} • {secondsToHMS(data.duration_sec)}
               </p>
             </div>
           </div>
@@ -107,7 +89,7 @@ const Summary = () => {
               <CardContent className="p-6">
                 <h2 className="text-xl font-semibold mb-4">Summary</h2>
                 <div className="prose max-w-none">
-                  {audioData.summary.split('\n').map((paragraph, i) => (
+                  {data.summary.split('\n').map((paragraph, i) => (
                     <p key={i} className="mb-4 leading-relaxed">
                       {paragraph}
                     </p>
@@ -120,7 +102,7 @@ const Summary = () => {
               <CardContent className="p-6">
                 <h2 className="text-xl font-semibold mb-4">Questions & Answers</h2>
                 <div className="space-y-6">
-                  {audioData.questions.map((qa, i) => (
+                  {data.qa_pairs.map((qa, i) => (
                     <div key={i} className="border-b pb-5 last:border-b-0">
                       <h3 className="font-medium text-lg mb-2">Q: {qa.question}</h3>
                       <p className="text-muted-foreground">A: {qa.answer}</p>

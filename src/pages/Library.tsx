@@ -1,22 +1,21 @@
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Search } from "lucide-react";
+import { secondsToHMS } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import AudioCard from "@/components/ui/audio-card";
 import axios from "@/lib/axios";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 
 interface AudioFile {
-  id: string;
+  id: number;
   audio_path: string;
-  text_file_path: string;
+  duration_sec: number;
   created_at: string;
 }
 
-const fetchAudioFiles = async () => {
-  const response = await axios.get('/api/audio-files/');
-  return response.data;
-};
+const fetchAudioFiles = async () =>
+  (await axios.get<AudioFile[]>("/api/audio-files/")).data;
 
 const Library = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -34,10 +33,8 @@ const Library = () => {
     });
   };
 
-  const calculateDuration = (path: string) => {
-    // This would ideally come from audio metadata
-    return "45 min"; // Placeholder duration
-  };
+  const calculateDuration = (audio: AudioFile) =>
+    secondsToHMS(audio.duration_sec);
   
   const filteredAudios = audioFiles.filter((audio: AudioFile) => 
     audio.audio_path.toLowerCase().includes(searchQuery.toLowerCase())
@@ -96,12 +93,14 @@ const Library = () => {
                 key={audio.id}
                 className="animate-fade-in"
               >
-                <AudioCard 
-                  id={audio.id}
-                  title={audio.audio_path.split('/').pop() || 'Untitled'} 
-                  date={formatDate(audio.created_at)}
-                  duration={calculateDuration(audio.audio_path)}
-                />
+                <Link to={`/summary/${audio.id}`}>
+                  <AudioCard 
+                    id={audio.id}
+                    title={audio.audio_path.split('/').pop() || 'Untitled'} 
+                    date={formatDate(audio.created_at)}
+                    duration={calculateDuration(audio)}
+                  />
+                </Link>
               </div>
             ))}
           </div>

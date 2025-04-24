@@ -1,0 +1,7 @@
+Django
+djangorestframework
+openai==0.28
+python-dotenv
+psycopg2-binary
+pydub
+django-cors-headers

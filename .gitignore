@@ -1,24 +1,106 @@
-# Logs
-logs
+################################################################################
+#  🐍  Python / Django
+################################################################################
+# Byte-compiled / optimized / packaged files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Virtual-envs
+env/
+venv*/
+ENV/
+.Python
+
+# Django runtime / development artefacts
+db.sqlite3
+*.sqlite3
 *.log
+*.pot
+*.mo
+local_settings.py
+settings_local.py
+celerybeat-schedule
+instance/
+
+# Test & coverage outputs
+.coverage*
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+
+# Static / media that you generate at build or run time
+staticfiles/
+static_root/
+media/
+
+################################################################################
+#  ⚛️  React / Node
+################################################################################
+# Dependencies & package managers
+node_modules/
+.pnpm/
+.pnpmfile.cjs
+.yarn/
+.yarn-cache/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# Build artefacts
+build/
+dist/
+dist-ssr/
+.next/          # for Next.js
+.cache/         # parcel / vite / others
+.sass-cache/
+.parcel-cache/
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# Test & coverage outputs
+coverage/
+*.cover
+*.coverage
+*.lcov
+
+# Env / config
+.env
+.env.*          # .env.development, .env.local, etc.
+
+################################################################################
+#  🛠️  IDEs & tooling
+################################################################################
+# VS Code
+.vscode/
+.history/
+
+# JetBrains IDEs
+.idea/
+
+# macOS
 .DS_Store
+
+# Windows
+Thumbs.db
+
+# Linux
+*~
+
+# Misc
+*.swp
+*.swo
+*.tmp
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# Python virtual environments
+TCVENV/

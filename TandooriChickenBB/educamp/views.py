@@ -1,59 +1,71 @@
-from django.http import JsonResponse
+# app/views.py
+from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-import os
-
 from .utils.stt_service import SpeechToTextService
+from .utils.nlg_service import NLGService
 from .models import AudioFile
-from .serializers import AudioFileSerializer
+from django.conf import settings
+from pydub import AudioSegment
 
-@api_view(['POST'])
+from .serializers import AudioFileSerializer, AudioFileDetailSerializer
+import os, json
+
+@api_view(["POST"])
 def speech_to_text(request):
-    if 'audio_file' not in request.FILES:
-        return JsonResponse({'error': 'No audio file provided'}, status=400)
+    if "audio_file" not in request.FILES:
+        return Response({"error": "No audio file provided"}, status=400)
 
-    audio_file = request.FILES['audio_file']
-    original_name = audio_file.name  # Original uploaded file name
+    f = request.FILES["audio_file"]
+    base, ext = os.path.splitext(f.name)
+    ext = ext.lower() if ext.lower() in [".mp3",".wav",".m4a",".webm"] else ".mp3"
 
-    # Split name and extension
-    base_name, ext = os.path.splitext(original_name)
+    # 1️⃣ Save audio under MEDIA_ROOT/audio_files/
+    audio_rel = f"audio_files/{base}{ext}"
+    audio_abs = os.path.join(settings.MEDIA_ROOT, audio_rel)
+    os.makedirs(os.path.dirname(audio_abs), exist_ok=True)
+    with open(audio_abs, "wb+") as dst:
+        for chunk in f.chunks(): dst.write(chunk)
 
-    # Default to .mp3 if no valid extension
-    if ext.lower() not in ['.mp3', '.wav', '.m4a', '.webm']:
-        ext = '.mp3'
+    # Get audio duration
+    audio_info = AudioSegment.from_file(audio_abs)
+    duration_sec = int(audio_info.duration_seconds)
 
-    audio_name = f"{base_name}{ext}"
-    audio_name_without_ext = base_name
+    # 2️⃣ STT
+    transcript = SpeechToTextService().transcribe(audio_abs)
 
-    # Save audio to media/audio_files
-    audio_file_dir = 'media/audio_files'
-    os.makedirs(audio_file_dir, exist_ok=True)
-    audio_file_path = os.path.join(audio_file_dir, audio_name)
+    # 3️⃣ NLG
+    nlg_out     = NLGService().generate(transcript)
+    summary     = nlg_out["summary"]
+    qa_pairs    = nlg_out["qa_pairs"]
 
-    with open(audio_file_path, 'wb+') as destination:
-        for chunk in audio_file.chunks():
-            destination.write(chunk)
+    # 4️⃣ Save transcript
+    text_rel = f"text_files/{base}.txt"
+    text_abs = os.path.join(settings.MEDIA_ROOT, text_rel)
+    os.makedirs(os.path.dirname(text_abs), exist_ok=True)
+    with open(text_abs,"w") as fp: fp.write(transcript)
 
-    # Transcribe using OpenAI Whisper
-    stt_service = SpeechToTextService()
+    # 5️⃣ DB record
+    obj = AudioFile.objects.create(
+        audio_path     = audio_rel,
+        text_file_path = text_rel,
+        summary        = summary,
+        qa_pairs       = qa_pairs,
+        duration_sec   = duration_sec,
+    )
+    return Response(AudioFileDetailSerializer(obj).data, status=status.HTTP_201_CREATED)
+
+# ----------  library list  ----------
+@api_view(["GET"])
+def audio_files(request):
+    qs = AudioFile.objects.all().order_by("-created_at")
+    return Response(AudioFileSerializer(qs, many=True).data)
+
+# ----------  detail /summary  ----------
+@api_view(["GET"])
+def audio_file_detail(request, pk):
     try:
-        transcription = stt_service.transcribe(audio_file_path)
-
-        # Save transcript to media/text_files
-        text_file_dir = 'media/text_files'
-        os.makedirs(text_file_dir, exist_ok=True)
-        text_file_path = os.path.join(text_file_dir, f"{audio_name_without_ext}.txt")
-        with open(text_file_path, 'w') as f:
-            f.write(transcription)
-
-        # Save paths to database (relative to media/)
-        audio_instance = AudioFile.objects.create(
-            audio_path=f'audio_files/{audio_name}',
-            text_file_path=f'text_files/{audio_name_without_ext}.txt'
-        )
-
-        serializer = AudioFileSerializer(audio_instance)
-        return Response(serializer.data)
-    
-    except Exception as e:
-        return JsonResponse({'error': f'Error during transcription: {str(e)}'}, status=500)
+        obj = AudioFile.objects.get(pk=pk)
+    except AudioFile.DoesNotExist:
+        return Response({"error":"Not found"}, status=404)
+    return Response(AudioFileDetailSerializer(obj).data)
