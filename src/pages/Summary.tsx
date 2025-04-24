@@ -42,13 +42,15 @@ const Summary = () => {
       }
     },
     enabled: !!id,
-    onError: (err) => {
-      console.error("Query error in Summary:", err);
-      toast({
-        title: "Error loading summary",
-        description: "Could not load the audio summary. Please try again later.",
-        variant: "destructive",
-      });
+    onSettled: (data, error) => {
+      if (error) {
+        console.error("Query error in Summary:", error);
+        toast({
+          title: "Error loading summary",
+          description: "Could not load the audio summary. Please try again later.",
+          variant: "destructive",
+        });
+      }
     }
   });
 

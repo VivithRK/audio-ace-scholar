@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import { secondsToHMS } from "@/lib/utils";
@@ -33,13 +34,15 @@ const Library = () => {
   const { data: audioFiles = [], isLoading, error } = useQuery({
     queryKey: ['audioFiles'],
     queryFn: fetchAudioFiles,
-    onError: (err) => {
-      console.error("Query error:", err);
-      toast({
-        title: "Error loading library",
-        description: "Could not connect to the backend server.",
-        variant: "destructive",
-      });
+    onSettled: (data, error) => {
+      if (error) {
+        console.error("Query error:", error);
+        toast({
+          title: "Error loading library",
+          description: "Could not connect to the backend server.",
+          variant: "destructive",
+        });
+      }
     }
   });
 
@@ -119,7 +122,7 @@ const Library = () => {
               >
                 <Link to={`/summary/${audio.id}`}>
                   <AudioCard 
-                    id={audio.id}
+                    id={audio.id.toString()}
                     title={audio.audio_path.split('/').pop() || 'Untitled'} 
                     date={formatDate(audio.created_at)}
                     duration={calculateDuration(audio)}
