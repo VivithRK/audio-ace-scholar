@@ -3,28 +3,42 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import FileUpload from "@/components/ui/file-upload";
 import { useToast } from "@/components/ui/use-toast";
+import axios from "@/lib/axios";
 
 const Upload = () => {
   const [isUploading, setIsUploading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleFileUpload = (file: File, title: string) => {
-    // In a real app, this would send the file to your backend
+  const handleFileUpload = async (file: File, title: string) => {
     setIsUploading(true);
     
-    // Simulate upload and processing delay
-    setTimeout(() => {
-      setIsUploading(false);
-      // Show success message
+    try {
+      const formData = new FormData();
+      formData.append('audio_file', file);
+      
+      const response = await axios.post('/api/STT/', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
       toast({
         title: "Upload successful!",
         description: "Your audio has been processed successfully.",
       });
       
-      // Navigate to the summary page with a mock ID
-      navigate("/summary/1");
-    }, 2000);
+      // Navigate to the summary page with the actual ID from response
+      navigate(`/summary/${response.data.id}`);
+    } catch (error) {
+      toast({
+        title: "Upload failed",
+        description: "There was an error uploading your audio file.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
