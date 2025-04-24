@@ -41,18 +41,19 @@ const Summary = () => {
         throw error;
       }
     },
-    enabled: !!id,
-    onSettled: (data, error) => {
-      if (error) {
-        console.error("Query error in Summary:", error);
-        toast({
-          title: "Error loading summary",
-          description: "Could not load the audio summary. Please try again later.",
-          variant: "destructive",
-        });
-      }
-    }
+    enabled: !!id
   });
+
+  useEffect(() => {
+    if (error) {
+      console.error("Query error in Summary:", error);
+      toast({
+        title: "Error loading summary",
+        description: "Could not load the audio summary. Please try again later.",
+        variant: "destructive",
+      });
+    }
+  }, [error]);
 
   if (isLoading) return <div className="p-10 text-center">Loading…</div>;
   if (error || !data) return <div className="p-10 text-center text-red-500">Error loading file</div>;

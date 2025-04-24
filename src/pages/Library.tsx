@@ -21,7 +21,13 @@ const fetchAudioFiles = async () => {
   try {
     const response = await axios.get<AudioFile[]>("/audio-files/");
     console.log("Audio files fetched successfully:", response.data);
-    return response.data;
+    // Check if response is actually an array before returning
+    if (Array.isArray(response.data)) {
+      return response.data;
+    } else {
+      console.error("API returned non-array data:", response.data);
+      return []; // Return empty array as fallback
+    }
   } catch (error) {
     console.error("Error fetching audio files:", error);
     throw error;
@@ -31,24 +37,27 @@ const fetchAudioFiles = async () => {
 const Library = () => {
   const [searchQuery, setSearchQuery] = useState("");
   
-  const { data: audioFiles = [], isLoading, error } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['audioFiles'],
     queryFn: fetchAudioFiles,
-    onSettled: (data, error) => {
-      if (error) {
-        console.error("Query error:", error);
-        toast({
-          title: "Error loading library",
-          description: "Could not connect to the backend server.",
-          variant: "destructive",
-        });
-      }
-    }
   });
 
+  // Safely handle the audioFiles data
+  const audioFiles = Array.isArray(data) ? data : [];
+  
   useEffect(() => {
     console.log("Library component mounted");
-  }, []);
+    
+    // Log error to toast if query failed
+    if (error) {
+      console.error("Query error:", error);
+      toast({
+        title: "Error loading library",
+        description: "Could not connect to the backend server.",
+        variant: "destructive",
+      });
+    }
+  }, [error]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
