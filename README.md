@@ -1,73 +1,141 @@
-# Welcome to your Lovable project
 
-## Project info
+# AudioAce - Audio to Summary Application
 
-**URL**: https://lovable.dev/projects/67d05832-ec44-4212-b48f-a7455fbd3a05
+AudioAce is a web application that allows users to upload audio recordings (such as lectures) and automatically converts them into concise text summaries and Q&A pairs for easier studying.
 
-## How can I edit this code?
+## Project Structure
 
-There are several ways of editing your application.
+This project consists of two main components:
 
-**Use Lovable**
+1. **Frontend**: A React application built with TypeScript, Vite, and Tailwind CSS
+2. **Backend**: A Django REST API that handles audio processing, transcription, and AI-driven summarization
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/67d05832-ec44-4212-b48f-a7455fbd3a05) and start prompting.
+## Getting Started
 
-Changes made via Lovable will be committed automatically to this repo.
+### Prerequisites
 
-**Use your preferred IDE**
+- Node.js (v16 or higher)
+- npm (v7 or higher)
+- Python (v3.8 or higher)
+- pip (Python package manager)
+- PostgreSQL (recommended for production)
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Frontend Setup
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+1. Navigate to the project root directory:
 
-Follow these steps:
+```bash
+cd audio-ace
+```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+2. Install the frontend dependencies:
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+```bash
+npm install
+```
 
-# Step 3: Install the necessary dependencies.
-npm i
+3. Start the development server:
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The frontend will be available at `http://localhost:8080`.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Backend Setup
 
-**Use GitHub Codespaces**
+1. Navigate to the backend directory:
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```bash
+cd TandooriChickenBB
+```
 
-## What technologies are used for this project?
+2. Create a Python virtual environment (optional but recommended):
 
-This project is built with:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+3. Install the required Python packages:
 
-## How can I deploy this project?
+```bash
+pip install -r requirements.txt
+```
 
-Simply open [Lovable](https://lovable.dev/projects/67d05832-ec44-4212-b48f-a7455fbd3a05) and click on Share -> Publish.
+4. Set up environment variables:
+   Create a `.env` file in the `TandooriChickenBB` directory with the following:
 
-## Can I connect a custom domain to my Lovable project?
+```
+OPENAI_API_KEY=your_openai_api_key
+SECRET_KEY=your_django_secret_key
+```
 
-Yes, you can!
+5. Run database migrations:
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+```bash
+python manage.py migrate
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+6. Start the Django development server:
+
+```bash
+python manage.py runserver
+```
+
+The backend API will be available at `http://localhost:8000`.
+
+## How the Application Works
+
+### Key Features
+
+- **Audio File Upload**: Users can upload audio recordings (lectures, podcasts, etc.)
+- **Automated Transcription**: The backend converts audio to text using AI speech-to-text
+- **Summary Generation**: AI processes the transcription to create concise summaries
+- **Q&A Generation**: AI extracts key questions and answers from the content
+- **Library Management**: Users can access all their summaries in one place
+
+### Technical Flow
+
+1. **Upload Process**:
+   - User uploads an audio file through the frontend
+   - File is sent to the Django backend via a POST request to `/api/STT/`
+   - Backend processes the audio using AI speech-to-text services
+   - The transcription is passed to another AI model to generate summaries and Q&A pairs
+   - Results are stored in the database
+
+2. **Library Access**:
+   - Frontend fetches all processed audio files from `/api/audio-files/`
+   - Each audio file's metadata is displayed in a card format
+   - Users can search for specific summaries
+
+3. **Summary Viewing**:
+   - When a user selects an audio file, details are fetched from `/api/audio-files/:id/`
+   - Users can toggle between viewing the summary or Q&A pairs
+
+## API Endpoints
+
+- **POST `/api/STT/`**: Upload and process audio files
+- **GET `/api/audio-files/`**: Get all processed audio files
+- **GET `/api/audio-files/:id/`**: Get details for a specific audio file
+
+## Deployment
+
+### Frontend Deployment
+
+- Build the frontend for production:
+  ```bash
+  npm run build
+  ```
+
+### Backend Deployment
+
+- Configure a production web server (e.g., Gunicorn, Nginx)
+- Set up proper environment variables
+- Configure static files serving and media storage
+
+## Troubleshooting
+
+- **Backend Connection Issues**: Ensure the API is running and accessible
+- **Audio Processing Errors**: Check the API logs for detailed error information
+- **Empty Summaries**: Verify that the audio quality is good and the API key is valid
