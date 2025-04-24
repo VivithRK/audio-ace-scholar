@@ -3,7 +3,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .utils.stt_service import SpeechToTextService
-from .utils.nlg_service import NLGService
+from .utils.text_to_summerize_service import TextToSummarizeService
 from .models import AudioFile
 from django.conf import settings
 from pydub import AudioSegment
@@ -34,10 +34,10 @@ def speech_to_text(request):
     # 2️⃣ STT
     transcript = SpeechToTextService().transcribe(audio_abs)
 
-    # 3️⃣ NLG
-    nlg_out     = NLGService().generate(transcript)
-    summary     = nlg_out["summary"]
-    qa_pairs    = nlg_out["qa_pairs"]
+    # 3️⃣ Use TextToSummarizeService instead of NLGService
+    summarize_out = TextToSummarizeService().generate(transcript)
+    summary       = summarize_out["summary"]
+    qa_pairs      = summarize_out["qa_pairs"]
 
     # 4️⃣ Save transcript
     text_rel = f"text_files/{base}.txt"
